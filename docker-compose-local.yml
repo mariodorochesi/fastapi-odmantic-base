@@ -1,0 +1,33 @@
+version: '3'
+services: 
+
+  api:
+    build: .
+    command: sh start_app.sh
+    container_name: api
+    volumes: 
+      - ./app:/app/app
+    expose: 
+      - 5000
+    env_file: .env
+    depends_on: 
+      - mongodb
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    env_file : .env
+    ports: 
+      - 27017:27017
+    volumes: 
+      - ./mongo_data/:/data/db
+
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    ports: 
+      - 80:80
+    volumes: 
+      - ./nginx_config.conf:/etc/nginx/conf.d/default.conf
+    depends_on: 
+      - api

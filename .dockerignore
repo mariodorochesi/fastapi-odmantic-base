@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+.env.example
+docker-compose.yml
+docker-compose.local.yml
+mongo_data/
+Dockerfile
+venv/
+README.md
+TODO.md
