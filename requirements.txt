@@ -22,6 +22,7 @@ idna==2.10
 itsdangerous==1.1.0
 Jinja2==2.11.2
 MarkupSafe==1.1.1
+mccabe==0.6.1
 motor==2.3.0
 odmantic==0.3.2
 orjson==3.4.7
@@ -31,6 +32,7 @@ pyasn1==0.4.8
 pycodestyle==2.6.0
 pycparser==2.20
 pydantic==1.7.3
+pyflakes==2.2.0
 pymongo==3.11.2
 python-dotenv==0.15.0
 python-jose==3.2.0
