@@ -4,7 +4,8 @@ from schemas.token import *
 from datetime import timedelta, datetime
 from config import settings
 from jose import JWTError, jwt
-from fastapi import HTTPException, status, Depends
+from fastapi import status, Depends
+from utils.exceptions import MessageException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from models.user import *
 
@@ -61,15 +62,15 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     Returns:
         [User] : Model instance of corresponding User
     """
-    credentials_exceptions = HTTPException(
+    credentials_exceptions = MessageException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        content={"content" : "Could not validate credentials"},
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    expired_token_exception = HTTPException(
+    expired_token_exception = MessageException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail="Token expired",
+        content={"message": "Token expired"},
         headers={"WWW-Authenticate": "Bearer"}
     )
 
@@ -104,6 +105,8 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     """
         Validate that current user is active
     """
+    if not current_user.is_verified:
+        raise MessageException(status_code=400, content={"message" : "User is not verified."})
     if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="User is not active.")
+        raise MessageException(status_code=400, content={"message" : "User is not active."})
     return current_user

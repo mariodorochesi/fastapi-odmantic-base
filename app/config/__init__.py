@@ -10,11 +10,14 @@ class Settings(BaseSettings):
     MONGO_HOST: str = os.environ.get("MONGO_HOST")
     MONGO_DATABASE: str = "base_project"
     # JWT
-    JWT_EXPIRES_DELTA: timedelta = timedelta(minutes=15)
+    JWT_EXPIRES_DELTA: timedelta = timedelta(hours=24)
     SECRET_KEY: str = os.environ.get("SECRET_KEY")
     ENCRYPTION_ALGORITHM: str = "HS256"
     # Date Format
     DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
-
+    # Email Validation Token
+    EMAIL_VALIDATION_EXPIRES_DELTA: timedelta = timedelta(hours=24)
+    # Password Recovery Token
+    PASSWORD_RECOVERY_EXPIRES_DELTA: timedelta = timedelta(minutes=15)
 
 settings = Settings()
