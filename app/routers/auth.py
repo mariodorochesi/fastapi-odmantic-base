@@ -2,6 +2,7 @@ from fastapi import APIRouter, Response, Depends
 from fastapi.responses import JSONResponse
 from models.user import *
 from utils.security import *
+from utils.email import *
 from schemas.token import Token
 from schemas.utils import *
 from schemas.user import *
@@ -9,6 +10,7 @@ from database import engine
 from pydantic import EmailStr
 from typing import Dict
 from jose import JWTError
+import codecs
 
 router = APIRouter()
 
@@ -27,12 +29,17 @@ async def register_user(user_data: User, response: Response):
     # Create a new Email Validation Token
     user.email_validation = EmailValidation()
     # Insert new user on database
+    """ARREGLAR ERROR DE LOGICA"""
     insert_response = await user_crud.create_or_update(user)
     # If user was not inserted
     if insert_response is None:
         response.status_code = 400
         return {"message": "There was a problem registering user."}
     """TODO: Add email sender for validation"""
+    html = get_html('activate_account.html',
+                    replacements={"{{NAME}}": user.name, "{{URL}}" : settings.API_BASE_URL +f'/auth/email-validation?uid={user.id}&token={user.email_validation.token}'})
+    settings.EMAIL_SENDER_INSTANCE.send_email(
+        user.email, "Welcome Aboard!", html)
     # Return success message :D
     return {"message": "User was succesfully registered."}
 
