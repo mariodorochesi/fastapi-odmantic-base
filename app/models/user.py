@@ -18,6 +18,8 @@ class User(Model):
     email_validation: Optional[EmailValidation] = None
     forgot_password : Optional[ForgotPassword] = None
     created_at: datetime = Field(default=datetime.utcnow())
+    email_delay: Optional[datetime] = Field(
+        default=datetime.utcnow() + settings.SEND_EMAIL_DELAY_TIME)
 
 
 

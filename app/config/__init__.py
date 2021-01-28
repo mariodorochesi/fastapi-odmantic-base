@@ -2,7 +2,7 @@ from pydantic import BaseSettings, SecretStr
 from enum import Enum
 from typing import Optional
 from datetime import timedelta
-from utils.email_senders import SMTPEmailSender
+from utils.email_senders import SMTPEmailSender, SendGridEmailSender
 import os
 
 
@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     EMAIL_VALIDATION_EXPIRES_DELTA: timedelta = timedelta(hours=24)
     # Password Recovery Token
     PASSWORD_RECOVERY_EXPIRES_DELTA: timedelta = timedelta(minutes=15)
+    # Send Email Delay to prevent bots spamming server
+    SEND_EMAIL_DELAY_TIME: timedelta = timedelta(minutes=5)
     # Base URL
     API_BASE_URL: str = 'localhost'
     # Base Directory
@@ -35,7 +37,7 @@ class Settings(BaseSettings):
     # Html Files Directory
     HTML_DIRECTORY: str = '/static/html/'
     # Email Sender Settings
-    EMAIL_SENDER_OPTION: EmailSenderOption = EmailSenderOption.smtp.value
+    EMAIL_SENDER_OPTION: EmailSenderOption = EmailSenderOption.sendgrid.value
     # Email SMTP Settings
     EMAIL_SENDER_ADDRESS: Optional[str] = os.environ.get(
         "EMAIL_SENDER_ADRESS") or None
@@ -47,7 +49,17 @@ class Settings(BaseSettings):
         "EMAIL_SENDER_SMTP_PORT") or 465
     EMAIL_SENDER_INSTANCE: SMTPEmailSender = SMTPEmailSender(
         EMAIL_SENDER_ADDRESS, EMAIL_SENDER_PASSWORD, EMAIL_SENDER_SMTP_HOST, EMAIL_SENDER_SMTP_PORT)
+    # Sendgrid Email Sender Settings
+    SENDGRID_API_KEY: Optional[str] = os.environ.get(
+        "SENDGRID_API_KEY") or None
+    SENDGRID_SENDER_ADRESS: Optional[str] = os.environ.get(
+        "SENDGRID_FROM_EMAIL") or None
+    SENDGRID_INSTANCE: SendGridEmailSender = SendGridEmailSender(
+        SENDGRID_SENDER_ADRESS, SENDGRID_API_KEY)
 
 
 settings = Settings()
-print(settings.EMAIL_SENDER_PASSWORD)
+
+
+
+

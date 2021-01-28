@@ -28,18 +28,17 @@ async def register_user(user_data: User, response: Response):
     user.password = hash_password(user.password)
     # Create a new Email Validation Token
     user.email_validation = EmailValidation()
-    # Insert new user on database
     """ARREGLAR ERROR DE LOGICA"""
+    """TODO: Add email sender for validation"""
+    html = get_html('activate_account.html',
+                    replacements={"{{NAME}}": user.name, "{{URL}}": settings.API_BASE_URL + f'/auth/email-validation?email={user.email}&token={user.email_validation.token}'})
+    send_email(user.email, "Welcome Aboard!", html)
+    # Insert new user on database
     insert_response = await user_crud.create_or_update(user)
     # If user was not inserted
     if insert_response is None:
         response.status_code = 400
         return {"message": "There was a problem registering user."}
-    """TODO: Add email sender for validation"""
-    html = get_html('activate_account.html',
-                    replacements={"{{NAME}}": user.name, "{{URL}}": settings.API_BASE_URL + f'/auth/email-validation?email={user.email}&token={user.email_validation.token}'})
-    settings.EMAIL_SENDER_INSTANCE.send_email(
-        user.email, "Welcome Aboard!", html)
     # Return success message :D
     return {"message": "User was succesfully registered."}
 
@@ -87,6 +86,45 @@ async def forgot_password(email: EmailStr):
     """TODO: Add email sender for password recovering"""
     return {"message": "Recover password token succesfully created."}
 
+
+@router.post('/email-validation-apply')
+async def ask_email_validation(email: UserEmail):
+    # Find user provided by email on URL
+    user = await user_crud.get(email.email)
+    # If user is none
+    if user is None:
+        raise MessageException(status_code=400, content={
+                               "message": "User was not found."})
+    # If user is already verified
+    if user.is_verified:
+        raise MessageException(status_code=400, content={
+                               "message": "User is already verified."})
+    if user.email_validation is not None:
+        # If current token hasnt expired yet
+        if datetime.utcnow() < user.email_validation.expires_at:
+            raise MessageException(status_code=400, content={
+                                   "message": "You already have an active request. Check your email to activate your account."})
+    if user.email_delay is not None:
+        if datetime.utcnow() < user.email_delay:
+            delta = (user.email_delay - datetime.utcnow()).seconds
+            if delta > 60:
+                raise MessageException(status_code=400, content={
+                                       "message": f"Try again in {int(delta/60)} minutes."})
+            raise MessageException(status_code=400, content={
+                                   "message": f"Try again in {int(delta)} seconds."})
+    # Create new email validation
+    user.email_validation = EmailValidation()
+    # Update record on database
+    insert_response = await user_crud.create_or_update(user)
+    # If there was a problem inserting on database
+    if insert_response is None:
+        raise MessageException(status_code=400, content={
+                               "message": "We had a problem processing your request."})
+    """TODO: Add email sender for validation"""
+    html = get_html('activate_account.html',
+                    replacements={"{{NAME}}": user.name, "{{URL}}": settings.API_BASE_URL + f'/auth/email-validation?email={user.email}&token={user.email_validation.token}'})
+    send_email(user.email, "Welcome Aboard!", html)
+    return {"message": "Email validation sent"}
 
 @router.get('/email-validation', status_code=200)
 async def validate_email(email: EmailStr, token: str):
