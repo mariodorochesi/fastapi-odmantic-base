@@ -37,7 +37,7 @@ async def register_user(user_data: User, response: Response):
         return {"message": "There was a problem registering user."}
     """TODO: Add email sender for validation"""
     html = get_html('activate_account.html',
-                    replacements={"{{NAME}}": user.name, "{{URL}}" : settings.API_BASE_URL +f'/auth/email-validation?uid={user.id}&token={user.email_validation.token}'})
+                    replacements={"{{NAME}}": user.name, "{{URL}}": settings.API_BASE_URL + f'/auth/email-validation?email={user.email}&token={user.email_validation.token}'})
     settings.EMAIL_SENDER_INSTANCE.send_email(
         user.email, "Welcome Aboard!", html)
     # Return success message :D
@@ -89,9 +89,9 @@ async def forgot_password(email: EmailStr):
 
 
 @router.get('/email-validation', status_code=200)
-async def validate_email(uid: ObjectId, token: str):
+async def validate_email(email: EmailStr, token: str):
     # Find user by provided id on URL
-    user = await user_crud.get_by_id(uid)
+    user = await user_crud.get(email)
     # If user is none
     if user is None:
         raise MessageException(status_code=400, content={
