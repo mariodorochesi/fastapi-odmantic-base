@@ -1,6 +1,7 @@
 from passlib.context import CryptContext
 from typing import Optional
 from schemas.token import *
+from schemas.user import UserEmail
 from datetime import timedelta, datetime
 from config import settings
 from jose import JWTError, jwt
@@ -110,3 +111,22 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     if not current_user.is_active:
         raise MessageException(status_code=400, content={"message" : "User is not active."})
     return current_user
+
+
+async def email_delay_check(email: UserEmail):
+    # Get user in database
+    user = await user_crud.get(email.email)
+    # If user is none
+    if user is None:
+        return MessageException(status_code=400, content={"message": "User does not exists"})
+    # If user is blocked by email delay
+    if user.email_delay is not None:
+        if datetime.utcnow() < user.email_delay:
+            delta = (user.email_delay - datetime.utcnow()).seconds
+            if delta > 60:
+                raise MessageException(status_code=400, content={
+                                       "message": f"Try again in {int(delta/60)} minutes."})
+            raise MessageException(status_code=400, content={
+                                   "message": f"Try again in {int(delta)} seconds."})
+    # Return user
+    return user
